@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Summoner Search</title>
+  <style>
+    :root { --bg: #0e1015; --card: #171a21; --line: #2a2f3a; --text: #e6e8ec; --muted: #9aa0ab; --accent: #c8952b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; display: flex; justify-content: center; padding: 40px 16px; }
+    .wrap { width: 100%; max-width: 560px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    p.sub { color: var(--muted); margin: 0 0 24px; }
+    form { display: flex; gap: 8px; flex-wrap: wrap; }
+    input, select, button { font: inherit; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+    input { flex: 1 1 240px; }
+    button { background: var(--accent); color: #1a1204; border: none; font-weight: 600; cursor: pointer; }
+    button:hover { filter: brightness(1.08); }
+    #result { margin-top: 24px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+    .rank { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
+    .rank:first-child { border-top: none; }
+    .muted { color: var(--muted); }
+    .err { color: #e07b7b; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Summoner Search</h1>
+    <p class="sub">Public data via the official Riot Games API.</p>
+
+    <form id="form">
+      <input id="riotId" placeholder="Name#TAG (e.g. Faker#KR1)" autocomplete="off" required />
+      <select id="platform">
+        <option value="euw1">EUW</option>
+        <option value="eun1">EUNE</option>
+        <option value="na1">NA</option>
+        <option value="kr">KR</option>
+        <option value="br1">BR</option>
+        <option value="la1">LAN</option>
+        <option value="la2">LAS</option>
+      </select>
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("form");
+    const result = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const riotId = document.getElementById("riotId").value.trim();
+      const platform = document.getElementById("platform").value;
+      result.innerHTML = '<p class="muted">Searching…</p>';
+
+      try {
+        const res = await fetch(`/api/search?riotId=${encodeURIComponent(riotId)}&platform=${platform}`);
+        const data = await res.json();
+        if (!res.ok) {
+          result.innerHTML = `<p class="err">${data.error}</p>`;
+          return;
+        }
+        const ranks = data.ranks.length
+          ? data.ranks.map(r => `
+              <div class="rank">
+                <span>${r.queue.replace("_", " ")}</span>
+                <span>${r.tier} ${r.rank} · ${r.lp} LP <span class="muted">(${r.wins}W / ${r.losses}L)</span></span>
+              </div>`).join("")
+          : '<p class="muted">No ranked data.</p>';
+
+        result.innerHTML = `
+          <div class="card">
+            <h2 style="margin:0 0 4px">${data.riotId}</h2>
+            <p class="muted" style="margin:0 0 12px">Level ${data.summonerLevel}</p>
+            ${ranks}
+          </div>`;
+      } catch {
+        result.innerHTML = '<p class="err">Connection error.</p>';
+      }
+    });
+  </script>
+</body>
+</html>
