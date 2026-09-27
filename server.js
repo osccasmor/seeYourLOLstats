@@ -49,10 +49,16 @@ app.get("/api/search", async (req, res) => {
   const platform = (req.query.platform || "euw1").toLowerCase();
   const ip = req.ip;
 
+  // Registramos TODO intento de búsqueda nada más entrar, aunque luego
+  // falle la validación o la API. Así queda constancia de lo que se buscó.
+  logSearch({ query: raw || "(vacío)", platform, ip, result: "ATTEMPT" });
+
   if (!RIOT_API_KEY) {
+    logSearch({ query: raw, platform, ip, result: "NO_API_KEY" });
     return res.status(500).json({ error: "Missing RIOT_API_KEY in environment" });
   }
   if (!raw.includes("#")) {
+    logSearch({ query: raw, platform, ip, result: "BAD_FORMAT" });
     return res.status(400).json({ error: "Use the format Name#TAG (e.g. Faker#KR1)" });
   }
   const region = PLATFORM_TO_REGION[platform] || "europe";
