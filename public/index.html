@@ -5,56 +5,236 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Summoner Search</title>
   <style>
-    :root { --bg: #0e1015; --card: #171a21; --line: #2a2f3a; --text: #e6e8ec; --muted: #9aa0ab; --accent: #c8952b; }
+    :root {
+      --bg: #07090d;
+      --panel: #0e1219;
+      --panel-2: #131925;
+      --sidebar: #0a0d13;
+      --line: #1e2735;
+      --text: #e8eaf0;
+      --muted: #8b93a3;
+      --accent: #c8952b;
+      --accent-2: #e0b34e;
+      --blue: #3a7bd5;
+      --win: #3fb27f;
+      --loss: #d1584f;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; display: flex; justify-content: center; padding: 40px 16px; }
-    .wrap { width: 100%; max-width: 560px; }
-    h1 { font-size: 1.5rem; margin: 0 0 4px; }
-    p.sub { color: var(--muted); margin: 0 0 24px; }
-    form { display: flex; gap: 8px; flex-wrap: wrap; }
-    input, select, button { font: inherit; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ---------- Sidebar ---------- */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--sidebar);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 12px;
+    }
+    .brand .logo {
+      width: 34px; height: 34px;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-radius: 8px;
+      color: #1a1204; font-weight: 800;
+    }
+    .brand b { font-size: 1.05rem; letter-spacing: .3px; }
+    .brand span { display: block; font-size: .72rem; color: var(--muted); font-weight: 400; }
+
+    .nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; }
+    .nav a {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 8px;
+      color: var(--muted); text-decoration: none;
+      font-size: .92rem; cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .nav a:hover { background: var(--panel-2); color: var(--text); }
+    .nav a.active {
+      background: linear-gradient(90deg, rgba(200,149,43,.18), transparent);
+      color: var(--accent-2);
+      border-left: 3px solid var(--accent);
+      padding-left: 11px;
+    }
+    .nav a .ic { width: 20px; text-align: center; font-size: 1.05rem; }
+    .nav .section { padding: 14px 14px 6px; font-size: .68rem; text-transform: uppercase; letter-spacing: 1px; color: #5a6272; }
+
+    .sidebar-footer { margin-top: auto; padding: 16px 20px 0; font-size: .72rem; color: #5a6272; border-top: 1px solid var(--line); }
+
+    /* ---------- Main ---------- */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: 56px; flex-shrink: 0;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 14px;
+      padding: 0 24px;
+      background: var(--panel);
+    }
+    .hamburger { display: none; background: none; border: none; color: var(--text); font-size: 1.4rem; cursor: pointer; }
+    .topbar .crumbs { color: var(--muted); font-size: .9rem; }
+    .topbar .crumbs b { color: var(--text); }
+
+    .content { padding: 48px 24px; display: flex; justify-content: center; }
+    .stage { width: 100%; max-width: 620px; }
+
+    .hero { text-align: center; margin-bottom: 28px; }
+    .hero h1 { font-size: 2rem; margin: 0 0 8px; }
+    .hero h1 .g { background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero p { color: var(--muted); margin: 0; }
+
+    form {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.35);
+    }
+    input, select, button { font: inherit; padding: 13px 15px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); }
     input { flex: 1 1 240px; }
-    button { background: var(--accent); color: #1a1204; border: none; font-weight: 600; cursor: pointer; }
-    button:hover { filter: brightness(1.08); }
-    #result { margin-top: 24px; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-    .rank { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--line); }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    select { cursor: pointer; }
+    button.search {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #1a1204; border: none; font-weight: 700; cursor: pointer;
+      padding-inline: 22px;
+    }
+    button.search:hover { filter: brightness(1.08); }
+
+    #result { margin-top: 28px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .card-head { display: flex; align-items: center; gap: 16px; padding: 22px; background: linear-gradient(180deg, var(--panel-2), var(--panel)); border-bottom: 1px solid var(--line); }
+    .avatar { width: 64px; height: 64px; border-radius: 12px; background: var(--panel-2); border: 2px solid var(--accent); display: grid; place-items: center; font-size: 1.6rem; }
+    .card-head h2 { margin: 0; font-size: 1.35rem; }
+    .card-head .lvl { color: var(--muted); font-size: .9rem; }
+    .ranks { padding: 8px 22px 18px; }
+    .rank { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
     .rank:first-child { border-top: none; }
+    .rank .q { color: var(--muted); font-size: .85rem; text-transform: capitalize; }
+    .rank .tier { font-weight: 700; color: var(--accent-2); }
+    .rank .wl { color: var(--muted); font-size: .85rem; }
+    .rank .wl .w { color: var(--win); }
+    .rank .wl .l { color: var(--loss); }
+
     .muted { color: var(--muted); }
-    .err { color: #e07b7b; }
+    .err { color: var(--loss); background: rgba(209,88,79,.1); border: 1px solid rgba(209,88,79,.3); padding: 14px 16px; border-radius: 10px; }
+    .placeholder { text-align: center; color: #5a6272; padding: 40px 0; }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+      padding: 12px 20px; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+      opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ---------- Responsive ---------- */
+    .backdrop { display: none; }
+    @media (max-width: 820px) {
+      .sidebar {
+        position: fixed; top: 0; bottom: 0; left: 0; z-index: 40;
+        transform: translateX(-100%); transition: transform .25s;
+      }
+      body.nav-open .sidebar { transform: translateX(0); }
+      body.nav-open .backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 39; }
+      .hamburger { display: block; }
+      .content { padding: 32px 16px; }
+      .hero h1 { font-size: 1.6rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Summoner Search</h1>
-    <p class="sub">Public data via the official Riot Games API.</p>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">◉</div>
+      <div>
+        <b>SummonerGraph</b>
+        <span>LoL stats</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="active" data-page="search"><span class="ic">🔍</span> Summoner Search</a>
+      <div class="section">Explore</div>
+      <a data-soon><span class="ic">🏆</span> Rankings</a>
+      <a data-soon><span class="ic">📊</span> Tier List</a>
+      <a data-soon><span class="ic">⚔️</span> Champions</a>
+      <a data-soon><span class="ic">🎮</span> Live Games</a>
+      <div class="section">More</div>
+      <a data-soon><span class="ic">📈</span> Statistics</a>
+      <a data-soon><span class="ic">⭐</span> Favorites</a>
+    </nav>
+    <div class="sidebar-footer">
+      Data via Riot Games API.<br>Not affiliated with Riot Games.
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
 
-    <form id="form">
-      <input id="riotId" placeholder="Name#TAG (e.g. Faker#KR1)" autocomplete="off" required />
-      <select id="platform">
-        <option value="euw1">EUW</option>
-        <option value="eun1">EUNE</option>
-        <option value="na1">NA</option>
-        <option value="kr">KR</option>
-        <option value="br1">BR</option>
-        <option value="la1">LAN</option>
-        <option value="la2">LAS</option>
-      </select>
-      <button type="submit">Search</button>
-    </form>
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="crumbs">Home / <b>Summoner Search</b></div>
+    </div>
 
-    <div id="result"></div>
+    <div class="content">
+      <div class="stage">
+        <div class="hero">
+          <h1>Summoner <span class="g">Search</span></h1>
+          <p>Look up any summoner's rank and stats — public data from the Riot API.</p>
+        </div>
+
+        <form id="form">
+          <input id="riotId" placeholder="Name#TAG  (e.g. Faker#KR1)" autocomplete="off" required />
+          <select id="platform">
+            <option value="euw1">EUW</option>
+            <option value="eun1">EUNE</option>
+            <option value="na1">NA</option>
+            <option value="kr">KR</option>
+            <option value="br1">BR</option>
+            <option value="la1">LAN</option>
+            <option value="la2">LAS</option>
+          </select>
+          <button type="submit" class="search">Search</button>
+        </form>
+
+        <div id="result">
+          <div class="placeholder">Enter a Riot ID above to see their profile.</div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <div class="toast" id="toast">Coming soon 🚧</div>
 
   <script>
     const form = document.getElementById("form");
     const result = document.getElementById("result");
 
+    // Search logic (unchanged)
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const riotId = document.getElementById("riotId").value.trim();
       const platform = document.getElementById("platform").value;
-      result.innerHTML = '<p class="muted">Searching…</p>';
+      result.innerHTML = '<div class="placeholder">Searching…</div>';
 
       try {
         const res = await fetch(`/api/search?riotId=${encodeURIComponent(riotId)}&platform=${platform}`);
@@ -66,21 +246,48 @@
         const ranks = data.ranks.length
           ? data.ranks.map(r => `
               <div class="rank">
-                <span>${r.queue.replace("_", " ")}</span>
-                <span>${r.tier} ${r.rank} · ${r.lp} LP <span class="muted">(${r.wins}W / ${r.losses}L)</span></span>
+                <span class="q">${r.queue.replace(/_/g, " ").toLowerCase()}</span>
+                <span><span class="tier">${r.tier} ${r.rank}</span> · ${r.lp} LP
+                  <span class="wl">(<span class="w">${r.wins}W</span> / <span class="l">${r.losses}L</span>)</span>
+                </span>
               </div>`).join("")
-          : '<p class="muted">No ranked data.</p>';
+          : '<div class="ranks"><p class="muted">No ranked data.</p></div>';
 
         result.innerHTML = `
           <div class="card">
-            <h2 style="margin:0 0 4px">${data.riotId}</h2>
-            <p class="muted" style="margin:0 0 12px">Level ${data.summonerLevel}</p>
-            ${ranks}
+            <div class="card-head">
+              <div class="avatar">🧙</div>
+              <div>
+                <h2>${data.riotId}</h2>
+                <div class="lvl">Level ${data.summonerLevel}</div>
+              </div>
+            </div>
+            <div class="ranks">${ranks}</div>
           </div>`;
       } catch {
         result.innerHTML = '<p class="err">Connection error.</p>';
       }
     });
+
+    // Sidebar "coming soon" items
+    const toast = document.getElementById("toast");
+    let toastTimer;
+    document.querySelectorAll("[data-soon]").forEach(a => {
+      a.addEventListener("click", () => {
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 1600);
+        closeNav();
+      });
+    });
+
+    // Mobile sidebar toggle
+    const hamburger = document.getElementById("hamburger");
+    const backdrop = document.getElementById("backdrop");
+    function closeNav() { document.body.classList.remove("nav-open"); }
+    hamburger.addEventListener("click", () => document.body.classList.toggle("nav-open"));
+    backdrop.addEventListener("click", closeNav);
   </script>
 </body>
 </html>
+
